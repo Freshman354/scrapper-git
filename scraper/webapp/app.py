@@ -7,9 +7,14 @@ Run with:
     export SCRAPER_DATABASE_URL=postgresql://user:pass@host/scraper_db
     python -m scraper.webapp.app
 Then open http://127.0.0.1:5050/
+
+Debug mode (and the auto-reloader that comes with it) is off by default —
+see _debug_enabled. Set FLASK_DEBUG=1 to turn it on for local development.
 """
 
 from __future__ import annotations
+
+import os
 
 import psycopg2
 from flask import Flask, jsonify, redirect, render_template, request, send_file, url_for
@@ -32,6 +37,14 @@ def _parse_urls(text: str) -> list:
             line = line.split(",")[0].strip()
         urls.append(line)
     return urls
+
+
+def _debug_enabled() -> bool:
+    """Opt-in only: Flask's reloader restarts the process on every file
+    save, which wipes the in-memory session store (docs/FRONTEND_AUDIT.md
+    B10/B1). Enable with FLASK_DEBUG=1."""
+    value = os.environ.get("FLASK_DEBUG")
+    return bool(value and value.lower() not in {"0", "false", "no"})
 
 
 def _fetch_results_for_candidates(candidate_ids: list) -> list:
@@ -141,4 +154,4 @@ def create_app() -> Flask:
 
 
 if __name__ == "__main__":
-    create_app().run(debug=True, port=5050)
+    create_app().run(debug=_debug_enabled(), port=5050)

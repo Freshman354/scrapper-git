@@ -10,6 +10,7 @@ import time
 import psycopg2
 import pytest
 from flask import Flask, Response
+from playwright.sync_api import expect, sync_playwright
 from werkzeug.serving import make_server
 
 from scraper.migrations.run_migrations import MIGRATIONS_DIR, run_migrations
@@ -135,3 +136,67 @@ def test_file_upload_path(client, target_server):
 def test_progress_page_for_unknown_session_is_404(client):
     resp = client.get("/scrape/nonexistent/progress")
     assert resp.status_code == 404
+
+
+@pytest.fixture
+def live_app():
+    """The real app behind a real HTTP server. The progress page's poller is
+    browser JavaScript, so Flask's test client cannot exercise it at all."""
+    app = create_app()
+    srv = make_server("127.0.0.1", 8768, app, threaded=True)
+    thread = threading.Thread(target=srv.serve_forever, daemon=True)
+    thread.start()
+    time.sleep(0.2)
+    yield "http://127.0.0.1:8768"
+    srv.shutdown()
+    thread.join(timeout=2)
+
+
+@pytest.fixture
+def browser():
+    with sync_playwright() as playwright:
+        instance = playwright.chromium.launch()
+        yield instance
+        instance.close()
+
+
+def test_progress_poller_reports_a_lost_session_instead_of_freezing(live_app, browser):
+    """B1: after an app restart the in-memory session is gone and status.json
+    404s. The old poller threw on `data.counts` inside its .then and never
+    re-armed, freezing the page on "Starting..." with no error shown."""
+    session_id = session_store.create_session(["https://example-store.com/"])
+    page = browser.new_page()
+    page.route("**/status.json", lambda route: route.fulfill(
+        status=404, content_type="application/json", body='{"error": "not found"}',
+    ))
+    page.goto(f"{live_app}/scrape/{session_id}/progress")
+
+    error = page.locator("#poll-error")
+    expect(error).to_be_visible(timeout=10000)
+    expect(error).to_contain_text("no longer available")
+    # Retrying a session that no longer exists could never work, so the page
+    # points at the "+ New Scrape" nav link instead of offering a dead button.
+    expect(page.locator("#retry-button")).to_be_hidden()
+
+
+def test_progress_poller_recovers_when_retried(live_app, browser):
+    """B2: any failed fetch froze the page the same way. It now reports the
+    failure and offers a retry that resumes polling."""
+    session_id = session_store.create_session(["https://example-store.com/"])
+    page = browser.new_page()
+    page.route("**/status.json", lambda route: route.abort())
+    page.goto(f"{live_app}/scrape/{session_id}/progress")
+
+    error = page.locator("#poll-error")
+    expect(error).to_be_visible(timeout=10000)
+    expect(error).to_contain_text("Lost contact with the server")
+
+    retry = page.locator("#retry-button")
+    expect(retry).to_be_visible()
+
+    page.unroute("**/status.json")  # server reachable again
+    retry.click()
+    expect(error).to_be_hidden(timeout=10000)
+    # No pipeline is running for this session, so it stays on "starting" —
+    # which is itself proof the poll loop is live again.
+    expect(page.locator("#status-line")).to_have_text("Status: starting", timeout=10000)

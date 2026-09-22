@@ -4,12 +4,37 @@
 <p class="muted">{{ session.urls|length }} URL(s) submitted.</p>
 <p id="status-line">Starting...</p>
 <p id="counts" class="muted"></p>
-<p><a id="results-link" href="{{ url_for('results', session_id=session.id) }}" style="display:none;">View results &rarr;</a></p>
+<p id="poll-error" class="error" style="display:none;"></p>
+<p>
+  <a id="results-link" href="{{ url_for('results', session_id=session.id) }}" style="display:none;">View results &rarr;</a>
+  <button id="retry-button" type="button" style="display:none;">Retry</button>
+</p>
 <script>
 const sessionId = "{{ session.id }}";
+
+function showError(message, canRetry) {
+  const errorLine = document.getElementById('poll-error');
+  errorLine.textContent = message;
+  errorLine.style.display = 'block';
+  document.getElementById('retry-button').style.display = canRetry ? 'inline-block' : 'none';
+}
+
+function clearError() {
+  document.getElementById('poll-error').style.display = 'none';
+  document.getElementById('retry-button').style.display = 'none';
+}
+
 function poll() {
+  clearError();
   fetch(`/scrape/${sessionId}/status.json`)
-    .then(r => r.json())
+    .then(response => {
+      if (!response.ok) {
+        const error = new Error(`HTTP ${response.status}`);
+        error.sessionGone = response.status === 404;
+        throw error;
+      }
+      return response.json();
+    })
     .then(data => {
       document.getElementById('status-line').textContent = 'Status: ' + data.status;
       const c = data.counts;
@@ -23,8 +48,20 @@ function poll() {
       } else {
         setTimeout(poll, 1500);
       }
+    })
+    .catch(error => {
+      // Without this the poll loop died silently — a throw in either .then
+      // above skipped the setTimeout that re-arms it, and nothing caught the
+      // rejection, so the page just stopped updating with no sign why.
+      if (error.sessionGone) {
+        showError('This scrape is no longer available — the app may have restarted. Use "+ New Scrape" above to start a new one.', false);
+      } else {
+        showError(`Lost contact with the server (${error.message}). The scrape may still be running.`, true);
+      }
     });
 }
+
+document.getElementById('retry-button').addEventListener('click', poll);
 poll();
 </script>
 {% endblock %}

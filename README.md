@@ -59,6 +59,18 @@ Then open http://127.0.0.1:5050 — paste or upload store URLs, watch progress,
 view results, export a CSV. Both options use the exact same pipeline; use
 whichever is convenient.
 
+Debug mode is **off** by default. That matters here: the Flask reloader restarts
+the process on every file save, and in-progress scrapes are held in memory only
+(no Redis, no table), so a restart loses them. Turn it on when you want it while
+developing the UI:
+
+```bash
+# macOS/Linux
+FLASK_DEBUG=1 python -m scraper.webapp.app
+# Windows (PowerShell)
+$env:FLASK_DEBUG = "1"; python -m scraper.webapp.app
+```
+
 ## 5. Running the test suite (optional)
 
 Tests run against a **real** local Postgres (database `scraper_test`) and
