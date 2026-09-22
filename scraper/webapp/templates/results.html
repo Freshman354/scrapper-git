@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Results</h1>
+<p>{{ businesses|length }} business(es) found from this scrape.
+   <a href="{{ url_for('export_csv', session_id=session.id) }}">Export CSV of verified leads &rarr;</a></p>
+<p class="muted">Export includes all currently-verified contacts in the database, not only this scrape's — run verification and export again later if more come in.</p>
+<table>
+<thead><tr><th>Business</th><th>Platform</th><th>Contacts</th><th>Socials</th></tr></thead>
+<tbody>
+{% for b in businesses %}
+<tr>
+  <td>{{ b.name or '(no name)' }}<br><span class="muted">{{ b.domain }}</span></td>
+  <td>{{ b.platform or 'unknown' }}</td>
+  <td>
+    {% for type, value, status in b.contacts %}
+      {{ type }}: {{ value }}
+      <span class="status-badge status-{{ status or 'unknown' }}">{{ status or 'unverified' }}</span><br>
+    {% else %}<span class="muted">none found</span>{% endfor %}
+  </td>
+  <td>
+    {% for platform, url in b.socials %}{{ platform }}<br>{% else %}<span class="muted">none found</span>{% endfor %}
+  </td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% endblock %}

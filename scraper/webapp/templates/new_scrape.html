@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>New Scrape</h1>
+<p class="muted">Paste store URLs, one per line, or upload a .txt/.csv file.</p>
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+<form method="post" enctype="multipart/form-data">
+  <textarea name="urls" placeholder="https://example-store.com&#10;https://another-store.com"></textarea>
+  <p><input type="file" name="file" accept=".txt,.csv"></p>
+  <button type="submit">Start Scrape</button>
+</form>
+{% endblock %}

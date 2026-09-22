@@ -1,0 +1,12 @@
+.venv/
+.pytest_cache/
+.claude/
+pycache/
+*.pyc
+.env
+*.log
+docs/AUDIT.md
+docs/*REPORT*.md
+AUDIT.md
+BRIEFING.md
+REPORT.md

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Scraping in progress</h1>
+<p class="muted">{{ session.urls|length }} URL(s) submitted.</p>
+<p id="status-line">Starting...</p>
+<p id="counts" class="muted"></p>
+<p><a id="results-link" href="{{ url_for('results', session_id=session.id) }}" style="display:none;">View results &rarr;</a></p>
+<script>
+const sessionId = "{{ session.id }}";
+function poll() {
+  fetch(`/scrape/${sessionId}/status.json`)
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('status-line').textContent = 'Status: ' + data.status;
+      const c = data.counts;
+      document.getElementById('counts').textContent =
+        `${c.success} succeeded, ${c.failed} failed, ${c.pending} pending (of ${c.total} total)`;
+      if (data.status === 'done' || data.status === 'error') {
+        document.getElementById('results-link').style.display = 'inline';
+        if (data.status === 'error') {
+          document.getElementById('status-line').textContent = 'Error: ' + data.error;
+        }
+      } else {
+        setTimeout(poll, 1500);
+      }
+    });
+}
+poll();
+</script>
+{% endblock %}

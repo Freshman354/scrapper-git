@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Scraper</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+         max-width: 900px; margin: 40px auto; padding: 0 20px; color: #222; line-height: 1.5; }
+  h1 { font-size: 1.4em; margin-bottom: 4px; }
+  textarea { width: 100%; height: 160px; font-family: monospace; padding: 8px; box-sizing: border-box;
+             border: 1px solid #ccc; border-radius: 4px; }
+  button { background: #1a1a1a; color: white; border: none; padding: 10px 18px; border-radius: 4px;
+           cursor: pointer; font-size: 1em; }
+  button:hover { background: #333; }
+  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  th, td { text-align: left; padding: 8px; border-bottom: 1px solid #eee; vertical-align: top; }
+  th { color: #666; font-size: 0.85em; text-transform: uppercase; }
+  .error { color: #b00020; margin: 10px 0; }
+  .muted { color: #777; font-size: 0.9em; }
+  .status-badge { display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 0.8em; margin-left: 4px; }
+  .status-verified { background: #d4edda; color: #155724; }
+  .status-invalid, .status-blocked, .status-abandoned { background: #f8d7da; color: #721c24; }
+  .status-unknown, .status-retry { background: #fff3cd; color: #856404; }
+  nav { margin-bottom: 24px; font-size: 0.9em; }
+  nav a { color: #555; text-decoration: none; margin-right: 14px; }
+  nav a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<nav><a href="{{ url_for('new_scrape') }}">+ New Scrape</a></nav>
+{% block content %}{% endblock %}
+</body>
+</html>
