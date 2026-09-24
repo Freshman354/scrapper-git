@@ -1,33 +1,57 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<title>Scraper</title>
-<style>
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-         max-width: 900px; margin: 40px auto; padding: 0 20px; color: #222; line-height: 1.5; }
-  h1 { font-size: 1.4em; margin-bottom: 4px; }
-  textarea { width: 100%; height: 160px; font-family: monospace; padding: 8px; box-sizing: border-box;
-             border: 1px solid #ccc; border-radius: 4px; }
-  button { background: #1a1a1a; color: white; border: none; padding: 10px 18px; border-radius: 4px;
-           cursor: pointer; font-size: 1em; }
-  button:hover { background: #333; }
-  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-  th, td { text-align: left; padding: 8px; border-bottom: 1px solid #eee; vertical-align: top; }
-  th { color: #666; font-size: 0.85em; text-transform: uppercase; }
-  .error { color: #b00020; margin: 10px 0; }
-  .muted { color: #777; font-size: 0.9em; }
-  .status-badge { display: inline-block; padding: 1px 7px; border-radius: 3px; font-size: 0.8em; margin-left: 4px; }
-  .status-verified { background: #d4edda; color: #155724; }
-  .status-invalid, .status-blocked, .status-abandoned { background: #f8d7da; color: #721c24; }
-  .status-unknown, .status-retry { background: #fff3cd; color: #856404; }
-  nav { margin-bottom: 24px; font-size: 0.9em; }
-  nav a { color: #555; text-decoration: none; margin-right: 14px; }
-  nav a:hover { text-decoration: underline; }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Scraper{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  {% block head %}{% endblock %}
 </head>
-<body>
-<nav><a href="{{ url_for('new_scrape') }}">+ New Scrape</a></nav>
-{% block content %}{% endblock %}
+<body class="flex min-h-screen flex-col bg-slate-50 text-slate-900 antialiased">
+
+  <a href="#main"
+     class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-blue-700 focus:shadow-lg focus:ring-2 focus:ring-blue-600">
+    Skip to content
+  </a>
+
+  <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
+    <nav aria-label="Main"
+         class="mx-auto flex max-w-7xl flex-wrap items-center gap-x-2 gap-y-1 px-4 py-2 sm:px-6 lg:px-8">
+
+      <a href="{{ url_for('dashboard') }}"
+         class="mr-1 inline-flex items-center gap-2 rounded-md px-2 py-2 text-sm font-semibold tracking-tight text-slate-900">
+        <span aria-hidden="true" class="grid h-6 w-6 place-items-center rounded bg-blue-600 text-xs font-bold text-white">S</span>
+        Scraper
+      </a>
+
+      {# Wrapped so the link group wraps as a unit on narrow screens rather than
+         stranding one link on its own line. #}
+      <div class="flex flex-wrap items-center gap-1">
+        {% set nav_items = [
+             ('dashboard',   'Dashboard'),
+             ('new_scrape',  'New Scrape'),
+             ('verify_page', 'Verify'),
+             ('export_page', 'Export'),
+        ] %}
+        {% for endpoint, label in nav_items %}
+          {% set active = request.endpoint == endpoint %}
+          <a href="{{ url_for(endpoint) }}"
+             class="inline-flex min-h-[44px] items-center rounded-md px-3 text-sm font-medium transition-colors
+                    {% if active %}bg-blue-50 text-blue-700{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}"
+             {% if active %}aria-current="page"{% endif %}>{{ label }}</a>
+        {% endfor %}
+      </div>
+
+    </nav>
+  </header>
+
+  <main id="main" class="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="mx-auto w-full max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
+    <p class="text-xs text-slate-400">Internal scraping tool — local use only.</p>
+  </footer>
+
 </body>
 </html>

@@ -83,9 +83,26 @@ def _fetch_results_for_candidates(candidate_ids: list) -> list:
 def create_app() -> Flask:
     app = Flask(__name__)
 
+    # --- step 1 scaffolding -------------------------------------------------
+    # The rebuilt shell's nav links to four destinations, but url_for raises
+    # BuildError at render time for an unregistered endpoint — so the three
+    # pages that don't exist yet are stubbed here purely to make the nav
+    # resolve. No database access, no logic. Each body is replaced wholesale
+    # by its own step: dashboard -> step 3, verify -> step 7, export -> step 5
+    # of docs/FRONTEND_REBUILD_PLAN.md. The _placeholder.html template goes
+    # away with them.
+
     @app.route("/")
-    def index():
-        return redirect(url_for("new_scrape"))
+    def dashboard():
+        return render_template("_placeholder.html", page_title="Dashboard", step=3)
+
+    @app.route("/verify")
+    def verify_page():
+        return render_template("_placeholder.html", page_title="Verify", step=7)
+
+    @app.route("/export")
+    def export_page():
+        return render_template("_placeholder.html", page_title="Export", step=5)
 
     @app.route("/scrape/new", methods=["GET"])
     def new_scrape():
